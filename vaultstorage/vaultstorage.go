@@ -15,16 +15,17 @@
 package vaultstorage
 
 import (
-	"fmt"
+	"encoding/json"
 
 	"github.com/mholt/certmagic"
 	"github.com/siva-chegondi/caddyvault/utils"
 )
 
 const (
-	loadURL  = "/v1/secret/data/"
-	listURL  = "/v1/secret/metadata/"
-	storeURL = "/v1/secret/data/"
+	loadURL   = "/v1/caddycerts/"
+	listURL   = "/v1/caddycerts/"
+	storeURL  = "/v1/caddycerts/"
+	deleteURL = "/v1/caddycerts/"
 )
 
 // VaultStorage storage for ACME certificates
@@ -34,15 +35,19 @@ type VaultStorage struct {
 
 // List lists certificates
 func (vaultStorage *VaultStorage) List(prefix string, recursive bool) ([]string, error) {
-	data := utils.QueryStore(vaultStorage.API + listURL + prefix)
-	fmt.Println(data)
-	return nil, nil
+	var list []string
+	if recursive {
+		list = listPath(vaultStorage.API+listURL, prefix)
+	} else {
+		list = queryPath(vaultStorage.API+listURL, prefix)
+	}
+	return list, nil
 }
 
 // Load retrieves certificate of key
 func (vaultStorage *VaultStorage) Load(key string) ([]byte, error) {
 	data := utils.QueryStore(vaultStorage.API + loadURL + key)
-	return data.Data.Data["test"].([]byte), nil
+	return json.Marshal(data)
 }
 
 // Store stores certificate with key association
@@ -62,17 +67,44 @@ func (vaultStorage *VaultStorage) Stat(key string) (certmagic.KeyInfo, error) {
 	return certmagic.KeyInfo{
 		Key:        key,
 		IsTerminal: false,
-		Size:       int64(len(data.Data.Data["test"].(string))),
+		Size:       int64(len(data.Data["cert"].(string))),
 		Modified:   data.Metadata.Created_time,
 	}, nil
 }
 
-// // Lock locks operations on certificate with particular key
-// func (vaultStorage *VaultStorage) Lock(key string) error {
-// 	return nil
-// }
+// Lock locks operations on certificate with particular key
+func (vaultStorage *VaultStorage) Lock(key string) error {
+	return utils.LoadStore(vaultStorage.API+loadURL+key+"_lock", []byte("locked"))
+}
 
-// // Unlock unlocks operations on certificate data
-// func (vaultStorage *VaultStorage) Unlock(key string) error {
-// 	return nil
-// }
+// Unlock unlocks operations on certificate data
+func (vaultStorage *VaultStorage) Unlock(key string) error {
+	return nil
+}
+
+func listPath(url, prefix string) []string {
+	var list []string
+	var data utils.Result
+
+	// list all the keys
+	list = append(list, queryPath(url, prefix)...)
+
+	// list all the paths and loop keys
+	data = utils.ListStore(url + prefix)
+	for _, keys := range data.Data {
+		for _, item := range keys.([]interface{}) {
+			list = append(list, listPath(url+prefix, "/"+item.(string))...)
+		}
+	}
+	return list
+}
+
+func queryPath(url, prefix string) []string {
+	var data utils.Result
+	var list []string
+	data = utils.QueryStore(url + prefix)
+	for item := range data.Data {
+		list = append(list, item)
+	}
+	return list
+}

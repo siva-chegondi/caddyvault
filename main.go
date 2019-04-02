@@ -27,5 +27,5 @@ func main() {
 		API: "http://127.0.0.1:8200",
 	}
 
-	vaultStore.Store("jokrhat", []byte("cert data "))
+	vaultStore.List("cert", true)
 }

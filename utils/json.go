@@ -13,16 +13,11 @@ type Result struct {
 	Lease_id       string
 	Renewable      bool
 	Lease_duration int
-	Data           resultData
+	Data           map[string]interface{}
 	Metadata       resultMetadata
 	Wrap_info      string
 	Warnings       string
 	Auth           string
-}
-
-// ResultData to hold data part of result
-type resultData struct {
-	Data map[string]interface{}
 }
 
 type resultMetadata struct {
@@ -32,10 +27,9 @@ type resultMetadata struct {
 	Destroyed     bool
 }
 
-var v Result
-
 // FormatResult unmarshals in to Result type
 func FormatResult(data []byte) Result {
+	var v Result
 	if err := json.Unmarshal(data, &v); err != nil {
 		panic(err)
 	}
