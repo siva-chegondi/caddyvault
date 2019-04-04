@@ -4,7 +4,6 @@ package utils
 
 import (
 	"bytes"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -51,27 +50,26 @@ func ListStore(vaultEndpoint string) Result {
 }
 
 // LoadStore loads store with data regarding
-func LoadStore(vaultEndpoint string, data []byte) error {
+func LoadStore(vaultEndpoint string, data []byte) (Result, error) {
 	client, req := prepareRequest(vaultEndpoint, "POST", data)
 
 	res, err := client.Do(req)
 	if err != nil {
-		return err
+		return Result{}, err
 	}
 	data, _ = ioutil.ReadAll(res.Body)
-	fmt.Print(string(data))
 	defer res.Body.Close()
-	return nil
+	return FormatResult(data), nil
 }
 
 // DeleteStore deletes item with key
-func DeleteStore(vaultEndpoint string, data []byte) error {
-	client, req := prepareRequest(vaultEndpoint, "DELETE", data)
+func DeleteStore(vaultEndpoint string) (Result, error) {
+	client, req := prepareRequest(vaultEndpoint, "DELETE", nil)
 
 	res, err := client.Do(req)
 	if err != nil {
-		return err
+		return Result{}, err
 	}
 	defer res.Body.Close()
-	return nil
+	return Result{}, nil
 }

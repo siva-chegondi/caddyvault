@@ -14,7 +14,11 @@
 
 package main
 
-import "github.com/siva-chegondi/caddyvault/vaultstorage"
+import (
+	"fmt"
+
+	"github.com/siva-chegondi/caddyvault/vaultstorage"
+)
 
 func init() {
 	// caddytls.RegisterClusterPlugin("caddyvault", func(vaultstorage.VaultStorage, error) {
@@ -27,5 +31,7 @@ func main() {
 		API: "http://127.0.0.1:8200",
 	}
 
-	vaultStore.List("cert", true)
+	if err := vaultStore.Lock("cert"); err != nil {
+		fmt.Println(err)
+	}
 }
