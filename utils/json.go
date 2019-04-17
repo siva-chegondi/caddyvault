@@ -13,18 +13,19 @@ type Result struct {
 	Lease_id       string
 	Renewable      bool
 	Lease_duration int
-	Data           resultData
+	Data           data
 	Metadata       resultMetadata
 	Wrap_info      string
 	Warnings       string
 	Auth           string
+	Errors         []string
 }
 
-// ResultData to hold data part of result
-type resultData struct {
-	Data map[string]interface{}
+type data struct {
+	Data     map[string]interface{}
+	Metadata map[string]interface{}
+	Keys     []string
 }
-
 type resultMetadata struct {
 	Created_time  time.Time
 	Deletion_time time.Time
@@ -32,10 +33,21 @@ type resultMetadata struct {
 	Destroyed     bool
 }
 
-var v Result
+// Request json type to push data
+type Request struct {
+	Options  Options           `json:"options"`
+	Data     map[string]string `json:"data"`
+	Versions []int             `json:"versions"`
+}
+
+// Options check-and-set
+type Options struct {
+	Cas int `json:"cas"`
+}
 
 // FormatResult unmarshals in to Result type
 func FormatResult(data []byte) Result {
+	var v Result
 	if err := json.Unmarshal(data, &v); err != nil {
 		panic(err)
 	}
