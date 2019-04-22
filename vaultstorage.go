@@ -17,7 +17,7 @@ package caddyvault
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -40,12 +40,12 @@ type VaultStorage struct {
 }
 
 func init() {
-	caddytls.RegisterClusterPlugin("vault", constructVaultPlugin)
+	caddytls.RegisterClusterPlugin("caddyvault", constructVaultPlugin)
 }
 
 func constructVaultPlugin() (certmagic.Storage, error) {
 	return &VaultStorage{
-		API: "",
+		API: os.Getenv("CADDY_CLUSTERING_VAULT_ENDPOINT"),
 	}, nil
 }
 
@@ -57,7 +57,6 @@ func (vaultStorage *VaultStorage) List(prefix string, recursive bool) ([]string,
 	} else {
 		list = queryPath(vaultStorage.API+loadURL, prefix)
 	}
-	fmt.Println(list)
 	return list, nil
 }
 

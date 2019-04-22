@@ -9,16 +9,16 @@ import (
 
 // Result json type to loop over keys
 type Result struct {
-	Request_id     string
-	Lease_id       string
-	Renewable      bool
-	Lease_duration int
-	Data           data
-	Metadata       resultMetadata
-	Wrap_info      string
-	Warnings       string
-	Auth           string
-	Errors         []string
+	RequestID     string `json:"request_id"`
+	LeaseID       string `json:"lease_id"`
+	Renewable     bool
+	LeaseDuration int `json:"lease_duration"`
+	Data          data
+	Metadata      resultMetadata
+	WrapInfo      string `json:"wrap_info"`
+	Warnings      string
+	Auth          string
+	Errors        []string
 }
 
 type data struct {
@@ -27,10 +27,10 @@ type data struct {
 	Keys     []string
 }
 type resultMetadata struct {
-	Created_time  time.Time
-	Deletion_time time.Time
-	version       int
-	Destroyed     bool
+	CreatedTime  time.Time `json:"created_time"`
+	DeletionTime time.Time `json:"deletion_time"`
+	version      int
+	Destroyed    bool
 }
 
 // Request json type to push data
