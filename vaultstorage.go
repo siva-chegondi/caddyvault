@@ -12,15 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package vaultstorage
+package caddyvault
 
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
+	"os"
 	"strings"
 	"time"
 
+	"github.com/mholt/caddy/caddytls"
 	"github.com/mholt/certmagic"
 	"github.com/siva-chegondi/caddyvault/utils"
 )
@@ -37,6 +38,16 @@ type VaultStorage struct {
 	API string
 }
 
+func init() {
+	caddytls.RegisterClusterPlugin("caddyvault", constructVaultPlugin)
+}
+
+func constructVaultPlugin() (certmagic.Storage, error) {
+	return &VaultStorage{
+		API: os.Getenv("CADDY_CLUSTERING_VAULT_ENDPOINT"),
+	}, nil
+}
+
 // List lists certificates
 func (vaultStorage *VaultStorage) List(prefix string, recursive bool) ([]string, error) {
 	var list []string
@@ -45,7 +56,6 @@ func (vaultStorage *VaultStorage) List(prefix string, recursive bool) ([]string,
 	} else {
 		list = queryPath(vaultStorage.API+loadURL, prefix)
 	}
-	fmt.Println(list)
 	return list, nil
 }
 
@@ -109,6 +119,11 @@ func (vaultStorage *VaultStorage) Unlock(key string) error {
 	if strings.Index(key, "_lock") < 0 {
 		key = key + "_lock"
 	}
+	return vaultStorage.Delete(key)
+}
+
+// Delete deletes the certificate from vault.
+func (vaultStorage *VaultStorage) Delete(key string) error {
 	response, err := utils.DeleteStore(vaultStorage.API + deleteURL + key)
 	if len(response.Errors) > 0 {
 		return errors.New(response.Errors[0])

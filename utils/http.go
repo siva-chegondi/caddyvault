@@ -6,11 +6,12 @@ import (
 	"bytes"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"time"
 )
 
 func prepareRequest(vaultEndpoint, method string, data []byte) (*http.Client, *http.Request) {
-	const vaultKey = "s.5B99YC7ZX9yhDZ7wxpgvFvtN"
+	vaultKey := os.Getenv("CADDY_CLUSTERING_VAULT_KEY")
 	httpClient := &http.Client{
 		Timeout: 30 * time.Second,
 	}
