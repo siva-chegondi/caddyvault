@@ -22,7 +22,6 @@ import (
 	"time"
 
 	"github.com/mholt/caddy/caddytls"
-
 	"github.com/mholt/certmagic"
 	"github.com/siva-chegondi/caddyvault/utils"
 )
