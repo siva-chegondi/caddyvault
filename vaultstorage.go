@@ -39,7 +39,7 @@ type VaultStorage struct {
 }
 
 func init() {
-	caddytls.RegisterClusterPlugin("caddyvault", constructVaultPlugin)
+	caddytls.RegisterClusterPlugin("vault", constructVaultPlugin)
 }
 
 func constructVaultPlugin() (certmagic.Storage, error) {
