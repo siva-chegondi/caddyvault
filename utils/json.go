@@ -23,7 +23,7 @@ type Result struct {
 
 type data struct {
 	Data     map[string]interface{}
-	Metadata map[string]interface{}
+	Metadata resultMetadata
 	Keys     []string
 }
 type resultMetadata struct {
@@ -52,4 +52,9 @@ func FormatResult(data []byte) Result {
 		panic(err)
 	}
 	return v
+}
+
+// CustomMarshal marshals based on type
+func CustomMarshal(v interface{}) ([]byte, error) {
+	return json.Marshal(v)
 }

@@ -62,7 +62,7 @@ func (vaultStorage *VaultStorage) List(prefix string, recursive bool) ([]string,
 // Load retrieves certificate of key
 func (vaultStorage *VaultStorage) Load(key string) ([]byte, error) {
 	res := utils.QueryStore(vaultStorage.API + loadURL + key)
-	return json.Marshal(res.Data.Data)
+	return json.Marshal(res.Data.Data[key])
 }
 
 // Store stores certificate with key association
@@ -83,13 +83,13 @@ func (vaultStorage *VaultStorage) Store(key string, value []byte) error {
 // Exists returns existance of certificate with key
 func (vaultStorage *VaultStorage) Exists(key string) bool {
 	res := utils.QueryStore(vaultStorage.API + loadURL + key)
-	return !res.Data.Metadata["destroyed"].(bool)
+	return !res.Data.Metadata.Destroyed
 }
 
 // Stat retrieves status of certificate with key param
 func (vaultStorage *VaultStorage) Stat(key string) (certmagic.KeyInfo, error) {
 	res := utils.QueryStore(vaultStorage.API + loadURL + key)
-	modified, err := time.Parse(time.RFC3339, res.Data.Metadata["created_time"].(string))
+	modified, err := time.Parse(time.RFC3339, res.Data.Metadata.CreatedTime.String())
 	return certmagic.KeyInfo{
 		Key:        key,
 		IsTerminal: false,
@@ -102,15 +102,18 @@ func (vaultStorage *VaultStorage) Stat(key string) (certmagic.KeyInfo, error) {
 func (vaultStorage *VaultStorage) Lock(key string) error {
 	// check for deadlock, wait for 5 (300s) minutes
 	key = key + "_lock"
-	if stat, err := vaultStorage.Stat(key); err == nil && vaultStorage.Exists(key) {
-		if time.Now().Unix()-stat.Modified.Unix() > 300 {
-			vaultStorage.Unlock(key)
+	if !vaultStorage.Exists(key) {
+		if stat, err := vaultStorage.Stat(key); err == nil {
+			if time.Now().Unix()-stat.Modified.Unix() > 300 {
+				vaultStorage.Unlock(key)
+			} else {
+				return errors.New("Lock already exists")
+			}
 		} else {
-			return errors.New("Lock already exists")
+			return err
 		}
-	} else {
-		return err
 	}
+
 	return lockSystem(key, vaultStorage.API+loadURL+key)
 }
 
