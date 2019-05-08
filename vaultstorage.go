@@ -83,16 +83,17 @@ func (vaultStorage *VaultStorage) Store(key string, value []byte) error {
 // Exists returns existance of certificate with key
 func (vaultStorage *VaultStorage) Exists(key string) bool {
 	res := utils.QueryStore(vaultStorage.API + loadURL + key)
-	return !res.Data.Metadata.Destroyed
+	return len(res.Data.Data) > 0 && !res.Data.Metadata.Destroyed
 }
 
 // Stat retrieves status of certificate with key param
 func (vaultStorage *VaultStorage) Stat(key string) (certmagic.KeyInfo, error) {
 	res := utils.QueryStore(vaultStorage.API + loadURL + key)
 	modified, err := time.Parse(time.RFC3339, res.Data.Metadata.CreatedTime)
+	list, err := vaultStorage.List(key, false)
 	return certmagic.KeyInfo{
 		Key:        key,
-		IsTerminal: false,
+		IsTerminal: len(list) > 0,
 		Size:       int64(len(res.Data.Data[key].(string))),
 		Modified:   modified,
 	}, err
@@ -101,8 +102,8 @@ func (vaultStorage *VaultStorage) Stat(key string) (certmagic.KeyInfo, error) {
 // Lock locks operations on certificate with particular key
 func (vaultStorage *VaultStorage) Lock(key string) error {
 	// check for deadlock, wait for 5 (300s) minutes
-	key = key + "_lock"
-	if !vaultStorage.Exists(key) {
+	key = key + ".lock"
+	if vaultStorage.Exists(key) {
 		if stat, err := vaultStorage.Stat(key); err == nil {
 			if time.Now().Unix()-stat.Modified.Unix() > 300 {
 				vaultStorage.Unlock(key)
@@ -119,8 +120,8 @@ func (vaultStorage *VaultStorage) Lock(key string) error {
 
 // Unlock unlocks operations on certificate data
 func (vaultStorage *VaultStorage) Unlock(key string) error {
-	if strings.Index(key, "_lock") < 0 {
-		key = key + "_lock"
+	if strings.Index(key, ".lock") < 0 {
+		key = key + ".lock"
 	}
 	return vaultStorage.Delete(key)
 }
