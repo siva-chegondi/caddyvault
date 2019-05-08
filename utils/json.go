@@ -4,7 +4,6 @@ package utils
 
 import (
 	"encoding/json"
-	"time"
 )
 
 // Result json type to loop over keys
@@ -23,12 +22,12 @@ type Result struct {
 
 type data struct {
 	Data     map[string]interface{}
-	Metadata map[string]interface{}
+	Metadata resultMetadata
 	Keys     []string
 }
 type resultMetadata struct {
-	CreatedTime  time.Time `json:"created_time"`
-	DeletionTime time.Time `json:"deletion_time"`
+	CreatedTime  string `json:"created_time"`
+	DeletionTime string `json:"deletion_time"`
 	version      int
 	Destroyed    bool
 }
@@ -52,4 +51,9 @@ func FormatResult(data []byte) Result {
 		panic(err)
 	}
 	return v
+}
+
+// CustomMarshal marshals based on type
+func CustomMarshal(v interface{}) ([]byte, error) {
+	return json.Marshal(v)
 }
