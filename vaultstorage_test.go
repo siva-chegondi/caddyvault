@@ -49,8 +49,8 @@ func TestList(t *testing.T) {
 func TestLock(t *testing.T) {
 	err := vaultStorage.Lock("check")
 	assert.NoError(t, err, "should not fail to lock")
-	// err = vaultStorage.Lock("check")
-	// assert.Error(t, err, "should fail to lock")
+	err = vaultStorage.Lock("check")
+	assert.Error(t, err, "should fail to lock")
 }
 
 func TestUnlock(t *testing.T) {

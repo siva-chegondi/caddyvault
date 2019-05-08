@@ -89,7 +89,7 @@ func (vaultStorage *VaultStorage) Exists(key string) bool {
 // Stat retrieves status of certificate with key param
 func (vaultStorage *VaultStorage) Stat(key string) (certmagic.KeyInfo, error) {
 	res := utils.QueryStore(vaultStorage.API + loadURL + key)
-	modified, err := time.Parse(time.RFC3339, res.Data.Metadata.CreatedTime.String())
+	modified, err := time.Parse(time.RFC3339, res.Data.Metadata.CreatedTime)
 	return certmagic.KeyInfo{
 		Key:        key,
 		IsTerminal: false,
