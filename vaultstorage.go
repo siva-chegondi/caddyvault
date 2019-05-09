@@ -62,7 +62,7 @@ func (vaultStorage *VaultStorage) List(prefix string, recursive bool) ([]string,
 // Load retrieves certificate of key
 func (vaultStorage *VaultStorage) Load(key string) ([]byte, error) {
 	res := utils.QueryStore(vaultStorage.API + loadURL + key)
-	return json.Marshal(res.Data.Data[key])
+	return []byte(res.Data.Data[key].(string)), nil
 }
 
 // Store stores certificate with key association
