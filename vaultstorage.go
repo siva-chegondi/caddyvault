@@ -62,6 +62,9 @@ func (vaultStorage *VaultStorage) List(prefix string, recursive bool) ([]string,
 // Load retrieves certificate of key
 func (vaultStorage *VaultStorage) Load(key string) ([]byte, error) {
 	res := utils.QueryStore(vaultStorage.API + loadURL + key)
+	if len(res.Data.Data) == 0 {
+		return []byte{}, os.ErrNotExist
+	}
 	return []byte(res.Data.Data[key].(string)), nil
 }
 
@@ -89,8 +92,8 @@ func (vaultStorage *VaultStorage) Exists(key string) bool {
 // Stat retrieves status of certificate with key param
 func (vaultStorage *VaultStorage) Stat(key string) (certmagic.KeyInfo, error) {
 	res := utils.QueryStore(vaultStorage.API + loadURL + key)
-	modified, err := time.Parse(time.RFC3339, res.Data.Metadata.CreatedTime)
 	list, err := vaultStorage.List(key, false)
+	modified, err := time.Parse(time.RFC3339, res.Data.Metadata.CreatedTime)
 	return certmagic.KeyInfo{
 		Key:        key,
 		IsTerminal: len(list) > 0,
