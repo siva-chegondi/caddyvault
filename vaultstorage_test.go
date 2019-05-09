@@ -11,6 +11,7 @@ import (
 
 var vaultStorage *caddyvault.VaultStorage
 var certPath string
+var certData string
 
 func TestMain(m *testing.M) {
 	os.Setenv("CADDY_CLUSTERING_VAULT_KEY", "s.1Dcdj2KeQbIbuibwGEhSBrQM")
@@ -19,17 +20,33 @@ func TestMain(m *testing.M) {
 		API: os.Getenv("CADDY_CLUSTERING_VAULT_ENDPOINT"),
 	}
 	certPath = path.Join("acme", "acme-v02.api.letsencrypt.org", "sites", "tls", "tls.crt")
+	certData = `
+	-----BEGIN PUBLIC KEY-----
+MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAlRuRnThUjU8/prwYxbty
+WPT9pURI3lbsKMiB6Fn/VHOKE13p4D8xgOCADpdRagdT6n4etr9atzDKUSvpMtR3
+CP5noNc97WiNCggBjVWhs7szEe8ugyqF23XwpHQ6uV1LKH50m92MbOWfCtjU9p/x
+qhNpQQ1AZhqNy5Gevap5k8XzRmjSldNAFZMY7Yv3Gi+nyCwGwpVtBUwhuLzgNFK/
+yDtw2WcWmUU7NuC8Q6MWvPebxVtCfVp/iQU6q60yyt6aGOBkhAX0LpKAEhKidixY
+nP9PNVBvxgu3XZ4P36gZV6+ummKdBVnc3NqwBLu5+CcdRdusmHPHd5pHf4/38Z3/
+6qU2a/fPvWzceVTEgZ47QjFMTCTmCwNt29cvi7zZeQzjtwQgn4ipN9NibRH/Ax/q
+TbIzHfrJ1xa2RteWSdFjwtxi9C20HUkjXSeI4YlzQMH0fPX6KCE7aVePTOnB69I/
+a9/q96DiXZajwlpq3wFctrs1oXqBp5DVrCIj8hU2wNgB7LtQ1mCtsYz//heai0K9
+PhE4X6hiE0YmeAZjR0uHl8M/5aW9xCoJ72+12kKpWAa0SFRWLy6FejNYCYpkupVJ
+yecLk/4L1W0l6jQQZnWErXZYe0PNFcmwGXy1Rep83kfBRNKRy5tvocalLlwXLdUk
+AIU+2GKjyT3iMuzZxxFxPFMCAwEAAQ==
+-----END PUBLIC KEY-----
+	`
 	os.Exit(m.Run())
 }
 
 func TestStore(t *testing.T) {
-	err := vaultStorage.Store(certPath, []byte("dump_data"))
+	err := vaultStorage.Store(certPath, []byte(certData))
 	assert.NoError(t, err, "should store data")
 }
 
 func TestLoad(t *testing.T) {
 	dataInBytes, _ := vaultStorage.Load(certPath)
-	assert.Equal(t, `"dump_data"`, string(dataInBytes), "Did not found items")
+	assert.Equal(t, certData, string(dataInBytes), "Did not found items")
 }
 
 func TestExists(t *testing.T) {
@@ -40,7 +57,7 @@ func TestExists(t *testing.T) {
 func TestStat(t *testing.T) {
 	keyInfo, err := vaultStorage.Stat(certPath)
 	assert.NoError(t, err, "should not fail")
-	assert.Equal(t, int64(len("dump_data")), keyInfo.Size, "key sizes should match")
+	assert.Equal(t, int64(len(certData)), keyInfo.Size, "key sizes should match")
 }
 
 func TestList(t *testing.T) {
