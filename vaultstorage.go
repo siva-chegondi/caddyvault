@@ -56,6 +56,10 @@ func (vaultStorage *VaultStorage) List(prefix string, recursive bool) ([]string,
 	} else {
 		list = queryPath(vaultStorage.API+loadURL, prefix)
 	}
+
+	if len(list) == 0 {
+		return list, os.ErrNotExist
+	}
 	return list, nil
 }
 
