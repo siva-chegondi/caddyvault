@@ -36,12 +36,12 @@ type resultMetadata struct {
 type Request struct {
 	Options  Options           `json:"options"`
 	Data     map[string]string `json:"data"`
-	Versions []int             `json:"versions"`
+	Versions []int             `json:"versions,omitempty"`
 }
 
 // Options check-and-set
 type Options struct {
-	Cas int `json:"cas"`
+	Cas int `json:"cas,omitempty"`
 }
 
 // FormatResult unmarshals in to Result type
