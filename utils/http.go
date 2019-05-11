@@ -67,10 +67,6 @@ func LoadStore(vaultEndpoint string, data []byte) (Result, error) {
 func DeleteStore(vaultEndpoint string) (Result, error) {
 	client, req := prepareRequest(vaultEndpoint, "DELETE", nil)
 
-	res, err := client.Do(req)
-	if err != nil {
-		return Result{}, err
-	}
-	defer res.Body.Close()
-	return Result{}, nil
+	_, err := client.Do(req)
+	return Result{}, err
 }

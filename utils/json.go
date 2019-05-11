@@ -34,7 +34,7 @@ type resultMetadata struct {
 
 // Request json type to push data
 type Request struct {
-	Options  Options           `json:"options"`
+	Options  Options           `json:"options,omitempty"`
 	Data     map[string]string `json:"data"`
 	Versions []int             `json:"versions,omitempty"`
 }

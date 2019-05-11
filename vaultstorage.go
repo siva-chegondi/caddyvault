@@ -84,9 +84,6 @@ func (vaultStorage *VaultStorage) Store(key string, value []byte) error {
 	}
 	byteData, _ := json.Marshal(req)
 	response, err := utils.LoadStore(vaultStorage.API+storeURL+key, byteData)
-	if err != nil {
-		fmt.Print("Failed to store")
-	}
 	if len(response.Errors) > 0 {
 		return errors.New("Failed to store, error: " + response.Errors[0])
 	}
@@ -113,47 +110,10 @@ func (vaultStorage *VaultStorage) Stat(key string) (certmagic.KeyInfo, error) {
 	}, merror
 }
 
-// Lock locks operations on certificate with particular key
-func (vaultStorage *VaultStorage) Lock(key string) error {
-	key = key + ".lock"
-
-	if vaultStorage.Exists(key) {
-
-		if stat, err := vaultStorage.Stat(key); err == nil {
-
-			// check for deadlock, wait for 5 (300s) minutes
-			if time.Now().Unix()-stat.Modified.Unix() > 300 {
-				vaultStorage.Unlock(key)
-			} else {
-				return errors.New("Lock already exists")
-			}
-		} else {
-			return err
-		}
-	}
-
-	return lockSystem(key, vaultStorage.API+storeURL+key)
-}
-
-// Unlock unlocks operations on certificate data
-func (vaultStorage *VaultStorage) Unlock(key string) error {
-	if strings.Index(key, ".lock") < 0 {
-		key = key + ".lock"
-	}
-	return vaultStorage.Delete(key)
-}
-
-// Delete deletes the certificate from vault.
-func (vaultStorage *VaultStorage) Delete(key string) error {
-	response, err := utils.DeleteStore(vaultStorage.API + deleteURL + key)
-	if err != nil {
-		fmt.Println("Failed to delete")
-	}
-	if len(response.Errors) > 0 {
-		return errors.New("Failed to delete" + response.Errors[0])
-	}
-	return err
-}
+/*
+Util functions start here
+listPath and queryPath
+*/
 
 func listPath(listurl, loadurl, prefix string) []string {
 	var list []string
@@ -180,6 +140,45 @@ func queryPath(url, prefix string) []string {
 	return list
 }
 
+// Lock locks operations on certificate with particular key
+func (vaultStorage *VaultStorage) Lock(key string) error {
+	key = key + ".lock"
+
+	if vaultStorage.Exists(key) {
+
+		if stat, err := vaultStorage.Stat(key); err == nil {
+
+			// check for deadlock, wait for 5 (300s) minutes
+			if time.Now().Unix()-stat.Modified.Unix() > 60 {
+				vaultStorage.Unlock(key)
+			} else {
+				return errors.New("Lock already exists")
+			}
+		} else {
+			return err
+		}
+	}
+
+	return lockSystem(key, vaultStorage.API+storeURL+key)
+}
+
+// Unlock unlocks operations on certificate data
+func (vaultStorage *VaultStorage) Unlock(key string) error {
+	if strings.Index(key, ".lock") < 0 {
+		key = key + ".lock"
+	}
+	return vaultStorage.Delete(key)
+}
+
+// Delete deletes the certificate from vault.
+func (vaultStorage *VaultStorage) Delete(key string) error {
+	response, err := utils.DeleteStore(vaultStorage.API + deleteURL + key)
+	if len(response.Errors) > 0 {
+		return errors.New("Failed to delete" + response.Errors[0])
+	}
+	return err
+}
+
 func lockSystem(key, lockPath string) error {
 	data := make(map[string]string)
 	data[key] = "locked"
@@ -191,9 +190,6 @@ func lockSystem(key, lockPath string) error {
 	}
 	jsonData, _ := json.Marshal(postBody)
 	response, err := utils.LoadStore(lockPath, jsonData)
-	if err != nil {
-		fmt.Println("Failed to lock")
-	}
 	if len(response.Errors) > 0 {
 		return errors.New("Failed to lock: " + response.Errors[0])
 	}
