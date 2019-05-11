@@ -17,6 +17,7 @@ package caddyvault
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"strings"
 	"time"
@@ -27,10 +28,11 @@ import (
 )
 
 const (
-	loadURL   = "/v1/caddycerts/data/"
-	listURL   = "/v1/caddycerts/metadata/"
-	storeURL  = "/v1/caddycerts/data/"
-	deleteURL = "/v1/caddycerts/metadata/"
+	defaultPrefix = "caddycerts"
+	loadURL       = "/v1/" + defaultPrefix + "/data/"
+	listURL       = "/v1/" + defaultPrefix + "/metadata/"
+	storeURL      = "/v1/" + defaultPrefix + "/data/"
+	deleteURL     = "/v1/" + defaultPrefix + "/metadata/"
 )
 
 // VaultStorage storage for ACME certificates
@@ -42,6 +44,7 @@ func init() {
 	caddytls.RegisterClusterPlugin("vault", constructVaultPlugin)
 }
 
+// creating instance of VaultStorage
 func constructVaultPlugin() (certmagic.Storage, error) {
 	return &VaultStorage{
 		API: os.Getenv("CADDY_CLUSTERING_VAULT_ENDPOINT"),
@@ -58,7 +61,7 @@ func (vaultStorage *VaultStorage) List(prefix string, recursive bool) ([]string,
 	}
 
 	if len(list) == 0 {
-		return list, os.ErrNotExist
+		return list, certmagic.ErrNotExist(fmt.Errorf("List with prefix %s is empty", prefix))
 	}
 	return list, nil
 }
@@ -67,7 +70,7 @@ func (vaultStorage *VaultStorage) List(prefix string, recursive bool) ([]string,
 func (vaultStorage *VaultStorage) Load(key string) ([]byte, error) {
 	res := utils.QueryStore(vaultStorage.API + loadURL + key)
 	if len(res.Data.Data) == 0 {
-		return []byte{}, os.ErrNotExist
+		return []byte{}, certmagic.ErrNotExist(fmt.Errorf("Key %s does not exists", key))
 	}
 	return []byte(res.Data.Data[key].(string)), nil
 }
@@ -81,8 +84,11 @@ func (vaultStorage *VaultStorage) Store(key string, value []byte) error {
 	}
 	byteData, _ := json.Marshal(req)
 	response, err := utils.LoadStore(vaultStorage.API+storeURL+key, byteData)
+	if err != nil {
+		fmt.Print("Failed to store")
+	}
 	if len(response.Errors) > 0 {
-		return errors.New(response.Errors[0])
+		return errors.New("Failed to store, error: " + response.Errors[0])
 	}
 	return err
 }
@@ -96,22 +102,26 @@ func (vaultStorage *VaultStorage) Exists(key string) bool {
 // Stat retrieves status of certificate with key param
 func (vaultStorage *VaultStorage) Stat(key string) (certmagic.KeyInfo, error) {
 	res := utils.QueryStore(vaultStorage.API + loadURL + key)
-	list, err := vaultStorage.List(key, false)
-	modified, err := time.Parse(time.RFC3339, res.Data.Metadata.CreatedTime)
+	_, err := vaultStorage.List(key, false)
+	_, ok := err.(certmagic.ErrNotExist)
+	modified, merror := time.Parse(time.RFC3339, res.Data.Metadata.CreatedTime)
 	return certmagic.KeyInfo{
 		Key:        key,
-		IsTerminal: len(list) > 0,
+		IsTerminal: !ok,
 		Size:       int64(len(res.Data.Data[key].(string))),
 		Modified:   modified,
-	}, err
+	}, merror
 }
 
 // Lock locks operations on certificate with particular key
 func (vaultStorage *VaultStorage) Lock(key string) error {
-	// check for deadlock, wait for 5 (300s) minutes
 	key = key + ".lock"
+
 	if vaultStorage.Exists(key) {
+
 		if stat, err := vaultStorage.Stat(key); err == nil {
+
+			// check for deadlock, wait for 5 (300s) minutes
 			if time.Now().Unix()-stat.Modified.Unix() > 300 {
 				vaultStorage.Unlock(key)
 			} else {
@@ -122,7 +132,7 @@ func (vaultStorage *VaultStorage) Lock(key string) error {
 		}
 	}
 
-	return lockSystem(key, vaultStorage.API+loadURL+key)
+	return lockSystem(key, vaultStorage.API+storeURL+key)
 }
 
 // Unlock unlocks operations on certificate data
@@ -136,8 +146,11 @@ func (vaultStorage *VaultStorage) Unlock(key string) error {
 // Delete deletes the certificate from vault.
 func (vaultStorage *VaultStorage) Delete(key string) error {
 	response, err := utils.DeleteStore(vaultStorage.API + deleteURL + key)
+	if err != nil {
+		fmt.Println("Failed to delete")
+	}
 	if len(response.Errors) > 0 {
-		return errors.New(response.Errors[0])
+		return errors.New("Failed to delete" + response.Errors[0])
 	}
 	return err
 }
@@ -178,8 +191,11 @@ func lockSystem(key, lockPath string) error {
 	}
 	jsonData, _ := json.Marshal(postBody)
 	response, err := utils.LoadStore(lockPath, jsonData)
+	if err != nil {
+		fmt.Println("Failed to lock")
+	}
 	if len(response.Errors) > 0 {
-		return errors.New(response.Errors[0])
+		return errors.New("Failed to lock: " + response.Errors[0])
 	}
 	return err
 }
