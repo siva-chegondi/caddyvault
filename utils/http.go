@@ -1,5 +1,3 @@
-// Copyright 2019 Siva Chegondi
-
 package utils
 
 import (
