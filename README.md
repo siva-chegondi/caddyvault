@@ -15,3 +15,7 @@ import (
 ```
 
 ## Docker file
+
+Checkout following project for reference to build your own docker file.
+
+[CaddyVault Docker](https://github.com/siva-chegondi/caddyvault-docker)
