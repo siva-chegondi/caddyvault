@@ -9,19 +9,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var vaultStorage *caddyvault.VaultStorage
-var certPath string
-var certData string
+var (
+	certPath     string
+	vaultStorage *caddyvault.VaultStorage
+)
 
-func TestMain(m *testing.M) {
-	os.Setenv("CADDY_CLUSTERING_VAULT_KEY", "s.1Dcdj2KeQbIbuibwGEhSBrQM")
-	os.Setenv("CADDY_CLUSTERING_VAULT_ENDPOINT", "http://localhost:8200")
-	vaultStorage = &caddyvault.VaultStorage{
-		API: os.Getenv("CADDY_CLUSTERING_VAULT_ENDPOINT"),
-	}
-	certPath = path.Join("acme", "acme-v02.api.letsencrypt.org", "sites", "tls", "tls.crt")
-	certData = `
-	-----BEGIN PUBLIC KEY-----
+const certData = `
+-----BEGIN PUBLIC KEY-----
 MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAlRuRnThUjU8/prwYxbty
 WPT9pURI3lbsKMiB6Fn/VHOKE13p4D8xgOCADpdRagdT6n4etr9atzDKUSvpMtR3
 CP5noNc97WiNCggBjVWhs7szEe8ugyqF23XwpHQ6uV1LKH50m92MbOWfCtjU9p/x
@@ -35,7 +29,17 @@ PhE4X6hiE0YmeAZjR0uHl8M/5aW9xCoJ72+12kKpWAa0SFRWLy6FejNYCYpkupVJ
 yecLk/4L1W0l6jQQZnWErXZYe0PNFcmwGXy1Rep83kfBRNKRy5tvocalLlwXLdUk
 AIU+2GKjyT3iMuzZxxFxPFMCAwEAAQ==
 -----END PUBLIC KEY-----
-	`
+`
+
+func TestMain(m *testing.M) {
+	os.Setenv("CADDY_CLUSTERING_VAULT_KEY", "s.1Dcdj2KeQbIbuibwGEhSBrQM")
+	os.Setenv("CADDY_CLUSTERING_VAULT_ENDPOINT", "http://localhost:8200")
+
+	vaultStorage = &caddyvault.VaultStorage{
+		API: os.Getenv("CADDY_CLUSTERING_VAULT_ENDPOINT"),
+	}
+
+	certPath = path.Join("acme", "acme-v02.api.letsencrypt.org", "sites", "tls", "tls.crt")
 	os.Exit(m.Run())
 }
 

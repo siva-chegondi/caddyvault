@@ -1,21 +1,21 @@
 # Caddyvault
 
-A TLS plugin of caddyserver to store certificates in hashicorp Vault in state of Clustering.
+A TLS clustering plugin for caddyserver to use [Vault](https://vaultproject.io) as storage for storing TLS data like certificates, keys etc.,
 
-**State: [ InProgress ]**
+state: **ALPHA**
 
-## Extending caddy with this plugin
-I configured the caddy source code to extend `vault` plugin, you just clone the following repo and install the project to have binary in your GO environment as follows.
-
-[Caddy - Vault Plugin](https://github.com/siva-chegondi/caddy)
-
+## Extending caddy with CaddyVault plugin
+To extend caddy with CaddyVault plugin, we need to include following `import statement`
+in github.com/mholt/caddy/caddy/caddymain/run.go file.
 ```
-cd $GOPATH/src/github.com/siva-chegondi/caddy
-go install
+import (
+   _ "github.com/mholt/caddy/caddyhttp"
+   _ "github.com/siva-chegondi/caddyvault"
+)
 ```
 
-Or Simply you can do following
+## Docker file
 
-```
-go get github.com/siva-chegondi/caddy
-```
+Checkout following project for reference to build your own docker file.
+
+[CaddyVault Docker](https://github.com/siva-chegondi/caddyvault-docker)
