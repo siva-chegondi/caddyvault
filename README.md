@@ -10,10 +10,10 @@ This plugin expects the following environment.
 
 ## Extending caddy with CaddyVault plugin
 To extend caddy with CaddyVault plugin, we need to include following `import statement`
-in github.com/mholt/caddy/caddy/caddymain/run.go file.
+in github.com/caddyserver/caddy/caddy/caddymain/run.go file.
 ```
 import (
-   _ "github.com/mholt/caddy/caddyhttp"
+   _ "github.com/caddyserver/caddy/caddyhttp"
    _ "github.com/siva-chegondi/caddyvault"
 )
 ```
