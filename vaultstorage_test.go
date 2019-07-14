@@ -31,6 +31,8 @@ AIU+2GKjyT3iMuzZxxFxPFMCAwEAAQ==
 -----END PUBLIC KEY-----
 `
 
+// This will run before
+// running every test case
 func TestMain(m *testing.M) {
 	os.Setenv("CADDY_CLUSTERING_VAULT_KEY", "s.1Dcdj2KeQbIbuibwGEhSBrQM")
 	os.Setenv("CADDY_CLUSTERING_VAULT_ENDPOINT", "http://localhost:8200")
@@ -43,6 +45,9 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
+/****************************
+* Following were test cases *
+****************************/
 func TestStore(t *testing.T) {
 	err := vaultStorage.Store(certPath, []byte(certData))
 	assert.NoError(t, err, "should store data")
